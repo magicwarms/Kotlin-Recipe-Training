@@ -59,3 +59,11 @@ kotlin {
     }
 }
 
+sqldelight {
+    databases {
+        create("RecipeDatabase") {
+            packageName = "com.example.myawesomerecipe.cache"
+        }
+    }
+}
+

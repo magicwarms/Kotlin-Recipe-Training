@@ -1,0 +1,30 @@
+CREATE TABLE Meal (
+    id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT,
+    country TEXT,
+    instructions TEXT NOT NULL,
+    thumbnail TEXT,
+    ingredient1 TEXT,
+    measure1 TEXT,
+    ingredient2 TEXT,
+    measure2 TEXT,
+    ingredient3 TEXT,
+    measure3 TEXT
+);
+
+insertMeal:
+INSERT INTO Meal(
+    id, name, category, country, instructions, thumbnail,
+    ingredient1, measure1,
+    ingredient2, measure2,
+    ingredient3, measure3
+) VALUES(?, ?, ?, ?, ?, ?,
+ ?, ?, ?, ?, ?, ?);
+
+removeAllMeals:
+DELETE FROM Meal;
+
+selectAllMealsInfo:
+SELECT Meal.*
+FROM Meal;
