@@ -1,35 +1,115 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+<div align="center">
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+<img src="androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="MyAwesomeRecipe icon" width="120" height="120" />
 
-* [/sharedLogic](./sharedLogic/src) is for the code that will be shared between app targets in the project.
-  The most important subfolder is [commonMain](./sharedLogic/src/commonMain/kotlin). If preferred, you
-  can add code to the platform-specific folders here too.
+# MyAwesomeRecipe
 
-* [/sharedUI](./sharedUI/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./sharedUI/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./sharedUI/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./sharedUI/src/jvmMain/kotlin)
-    folder is the appropriate location.
+**A Kotlin Multiplatform app sharing business logic (and Compose UI on Android) across Android and iOS.**
 
-### Running the apps
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.11.1-4285F4?logo=jetpackcompose&logoColor=white)
+![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-brightgreen)
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
-
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
-
-### Running tests
-
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
-
-- Android tests: `./gradlew :sharedUI:testAndroidHostTest :sharedLogic:testAndroidHostTest`
-- iOS tests: `./gradlew :sharedLogic:iosSimulatorArm64Test`
+</div>
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Overview
+
+MyAwesomeRecipe is a [Kotlin Multiplatform (KMP)](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html) project targeting **Android** and **iOS**. Shared code lives under the package `com.example.myawesomerecipe`. Business logic is written once in Kotlin and consumed by both platforms; the Android app additionally renders a shared **Compose Multiplatform** UI, while iOS hosts its own **SwiftUI** and reuses only the shared logic.
+
+## Tech stack
+
+| Area | Technology | Version |
+|------|-----------|---------|
+| Language | Kotlin | 2.4.0 |
+| Shared UI | Compose Multiplatform | 1.11.1 |
+| Android build | Android Gradle Plugin | 9.2.1 |
+| Networking (scaffolded) | Ktor client | 3.5.1 |
+| Persistence (scaffolded) | SQLDelight | 2.3.2 |
+| Concurrency | kotlinx.coroutines | 1.11.0 |
+| Android SDK | compileSdk 37 · minSdk 26 · targetSdk 36 | — |
+
+Dependency and plugin versions are centralized in the Gradle version catalog: [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
+
+## Project structure
+
+```
+MyAwesomeRecipe/
+├── androidApp/     Android application (entry point, MainActivity → App())
+├── iosApp/         Native SwiftUI application (links the SharedLogic framework)
+├── sharedLogic/    KMP library: business logic + platform abstraction
+├── sharedUI/       Compose Multiplatform UI library (Android target today)
+└── gradle/         Version catalog & wrapper
+```
+
+### Modules
+
+- **`sharedLogic`** — Kotlin Multiplatform library holding the shared business logic. Compiles for Android and iOS and exposes a **static iOS framework named `SharedLogic`** (`iosArm64`, `iosSimulatorArm64`). Ktor, kotlinx.serialization, coroutines, and SQLDelight are wired here.
+- **`sharedUI`** — Compose Multiplatform UI library. Depends on `sharedLogic` (`api(projects.sharedLogic)`) and defines the shared `App()` composable. **Currently Android-only** (no iOS target declared yet).
+- **`androidApp`** — Android application. Depends on `sharedUI`; `MainActivity` sets `App()` as its content.
+- **`iosApp`** — Native SwiftUI application. Links the `SharedLogic` framework **directly** and calls `Greeting().greet()` from `ContentView.swift`. This is also where you add SwiftUI code.
+
+## Architecture
+
+**Platform abstraction (`expect`/`actual`).** `sharedLogic` declares platform-specific behavior in common code and implements it per target:
+
+- `commonMain/Platform.kt` — `interface Platform` + `expect fun getPlatform()`
+- `androidMain/Platform.android.kt` — Android `actual` (reports `Build.VERSION.SDK_INT`)
+- `iosMain/Platform.ios.kt` — iOS `actual` (reports `UIDevice` name/version)
+
+`Greeting.greet()` in `commonMain` is the shared entry point both apps call.
+
+**UI topology.** The shared Compose UI runs on **Android only**. iOS uses native SwiftUI and consumes just `sharedLogic`. To share the Compose UI on iOS, add iOS targets and a framework to `sharedUI/build.gradle.kts` and wire it into the Xcode project.
+
+## Requirements
+
+- JDK 11 or newer
+- Android SDK (compileSdk 37)
+- Xcode (for building and running the iOS app)
+
+## Getting started
+
+Clone the repo and open it in Android Studio / IntelliJ IDEA (with the Kotlin Multiplatform plugin) or use the Gradle wrapper directly.
+
+### Run the Android app
+
+```bash
+./gradlew :androidApp:assembleDebug
+```
+
+Or use the run configuration from your IDE's run widget.
+
+### Run the iOS app
+
+Open [`iosApp/iosApp.xcodeproj`](iosApp) in Xcode and run it on a simulator or device. Xcode drives the build of the `SharedLogic` framework.
+
+## Testing
+
+```bash
+# Android host (unit) tests
+./gradlew :sharedLogic:testAndroidHostTest :sharedUI:testAndroidHostTest
+
+# iOS simulator tests
+./gradlew :sharedLogic:iosSimulatorArm64Test
+
+# Everything
+./gradlew check
+```
+
+Run a single host test with the `--tests` filter:
+
+```bash
+./gradlew :sharedLogic:testAndroidHostTest --tests "com.example.myawesomerecipe.SharedLogicAndroidHostTest.example"
+```
+
+## Notes
+
+- **Version catalog is the source of truth.** Add or bump dependencies in [`gradle/libs.versions.toml`](gradle/libs.versions.toml), referenced as `libs.<alias>`; reference modules with the typesafe accessor `projects.<module>`.
+- **Ktor and SQLDelight are scaffolded but unused.** The dependencies, platform drivers, and SQLDelight plugin are configured, but there are no `.sq` files yet and the Ktor call in `Greeting.kt` is commented out — ready for future networking and persistence.
+- **Gradle configuration cache and build cache are enabled** (`gradle.properties`). When iterating on build logic you may need `--no-configuration-cache`.
+- All modules target `JvmTarget.JVM_11`.
+
+## License
+
+No license file is currently included in this repository.
