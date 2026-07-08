@@ -40,6 +40,8 @@ kotlin {
             implementation(libs.ktor.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.sqldelight.runtime)
+            implementation(libs.androidx.lifecycle.viewmodelCompose)
+            implementation(libs.androidx.lifecycle.viewmodel.navigation3)
         }
 
         commonTest.dependencies {
