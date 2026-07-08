@@ -25,9 +25,11 @@ MyAwesomeRecipe is a [Kotlin Multiplatform (KMP)](https://www.jetbrains.com/help
 | Language | Kotlin | 2.4.0 |
 | Shared UI | Compose Multiplatform | 1.11.1 |
 | Android build | Android Gradle Plugin | 9.2.1 |
-| Networking (scaffolded) | Ktor client | 3.5.1 |
-| Persistence (scaffolded) | SQLDelight | 2.3.2 |
+| Networking | Ktor client | 3.5.1 |
+| Serialization | kotlinx.serialization | — |
+| Persistence | SQLDelight | 2.3.2 |
 | Concurrency | kotlinx.coroutines | 1.11.0 |
+| Presentation | AndroidX lifecycle-viewmodel | — |
 | Android SDK | compileSdk 37 · minSdk 26 · targetSdk 36 | — |
 
 Dependency and plugin versions are centralized in the Gradle version catalog: [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
@@ -59,6 +61,14 @@ MyAwesomeRecipe/
 - `iosMain/Platform.ios.kt` — iOS `actual` (reports `UIDevice` name/version)
 
 `Greeting.greet()` in `commonMain` is the shared entry point both apps call.
+
+Three more `expect`/`actual` pairs follow the same pattern in `sharedLogic`:
+
+- **`RecipeStorage`** — favourites persistence. `androidMain` uses `SharedPreferences`, `iosMain` uses `NSUserDefaults`.
+- **`createHttpClient()`** (`repository/HttpClient.kt`) — Ktor client factory. `androidMain` uses the OkHttp engine, `iosMain` uses the Darwin engine; both install `ContentNegotiation` with kotlinx JSON.
+- **`DatabaseDriverFactory`** — a plain interface (not `expect`) implemented per platform to supply the SQLDelight `SqlDriver`.
+
+**Data / domain / presentation layers.** `sharedLogic/commonMain` is organized into `model/` (`MealModel`, the serializable `MealDTO`/`MealResponse` with `toModel()`, and `UiState`), `repository/` (`MealRepository` + `MealRepositoryImpl`), `presentation/` (`MealViewModel` exposing a `StateFlow<UiState>`), and `cache/` (SQLDelight `Database` wrapper over the `Meal` table in `RecipeDatabase.sq`). These layers are **partially wired**: `MealRepositoryImpl.fetchMeals()` now fetches from [TheMealDB](https://themealdb.com) over Ktor and maps the response to `MealModel`, but `MealViewModel.fetchMeals()` is still a stub that never calls the repository, `favorites()` is `TODO()`, and the SQLDelight cache / `RecipeStorage` are not yet exercised.
 
 **UI topology.** The shared Compose UI runs on **Android only**. iOS uses native SwiftUI and consumes just `sharedLogic`. To share the Compose UI on iOS, add iOS targets and a framework to `sharedUI/build.gradle.kts` and wire it into the Xcode project.
 
@@ -106,7 +116,7 @@ Run a single host test with the `--tests` filter:
 ## Notes
 
 - **Version catalog is the source of truth.** Add or bump dependencies in [`gradle/libs.versions.toml`](gradle/libs.versions.toml), referenced as `libs.<alias>`; reference modules with the typesafe accessor `projects.<module>`.
-- **Ktor and SQLDelight are scaffolded but unused.** The dependencies, platform drivers, and SQLDelight plugin are configured, but there are no `.sq` files yet and the Ktor call in `Greeting.kt` is commented out — ready for future networking and persistence.
+- **Ktor is wired end-to-end in the repository; SQLDelight is still scaffolding.** `MealRepositoryImpl` calls the `createHttpClient()` factory (OkHttp on Android, Darwin on iOS) to fetch from TheMealDB. `ContentNegotiation` needs the separate `ktor-client-content-negotiation` dependency (alongside `ktor-serialization-kotlinx-json`). SQLDelight has a schema (`RecipeDatabase.sq` — `Meal` table with insert/select/delete queries) and platform drivers but is not yet consumed. The `MealViewModel` and the direct Ktor call in `Greeting.kt` remain stubs/commented out.
 - **Gradle configuration cache and build cache are enabled** (`gradle.properties`). When iterating on build logic you may need `--no-configuration-cache`.
 - All modules target `JvmTarget.JVM_11`.
 

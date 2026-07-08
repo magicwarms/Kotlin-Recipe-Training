@@ -38,6 +38,7 @@ kotlin {
             // put your Multiplatform dependencies here
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.serialization.json)
+            implementation(libs.ktor.client.content.negotiation)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.sqldelight.runtime)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
