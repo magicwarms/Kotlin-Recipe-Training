@@ -11,9 +11,9 @@ import com.example.myawesomerecipe.model.UiState
 import com.example.myawesomerecipe.repository.MealRepository
 import com.example.myawesomerecipe.repository.MealRepositoryImpl
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.toList
 
 class MealViewModel : ViewModel() {
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.Loading)
@@ -36,9 +36,12 @@ class MealViewModel : ViewModel() {
                 val meals = mealRepository.fetchMeals(mealName)
                 _uiState.value = UiState.Success(meals)
             } catch (ex: Exception) {
-                val cachedMeals = mealRepository.favorites().toList().flatten()
-                _uiState.value = UiState.Success(cachedMeals)
-                _uiState.value = UiState.Error(ex.message ?: "Unknown error")
+                val cachedMeals = mealRepository.favorites().first()
+                if (cachedMeals.isNotEmpty()) {
+                    _uiState.value = UiState.Success(cachedMeals)
+                } else {
+                    _uiState.value = UiState.Error(ex.message ?: "Unknown error")
+                }
             }
         }
     }

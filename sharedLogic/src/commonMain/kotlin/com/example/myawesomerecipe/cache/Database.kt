@@ -21,13 +21,20 @@ internal class Database(driverFactory: DatabaseDriverFactory) {
         ).value.toInt()
     }
 
-    fun getMeals(): Flow<List<MealModel>> {
+    fun getMeals(): List<MealModel> {
+        return dbQuery
+            .selectAllMealsInfo()
+            .executeAsList()
+            .map { it.toModel() }
+    }
+
+    fun getMealsAsFlow(): Flow<List<MealModel>> {
         return dbQuery
             .selectAllMealsInfo()
             .asFlow()
             .mapToList(Dispatchers.Default)
-            .map {meal ->
-                meal.map { it.toModel() }
+            .map { meals ->
+                meals.map { it.toModel() }
             }
     }
 

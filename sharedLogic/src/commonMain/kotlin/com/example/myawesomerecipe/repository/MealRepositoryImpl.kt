@@ -29,7 +29,7 @@ class MealRepositoryImpl : MealRepository {
     }
 
     override fun favorites(): Flow<List<MealModel>> {
-        return database.getMeals()
+        return database.getMealsAsFlow()
     }
 
     override fun saveFavorite(meal: MealModel): Int {
