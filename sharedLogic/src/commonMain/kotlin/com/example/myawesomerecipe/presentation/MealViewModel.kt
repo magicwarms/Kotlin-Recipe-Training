@@ -13,9 +13,8 @@ import com.example.myawesomerecipe.model.UiState
 import com.example.myawesomerecipe.repository.MealRepository
 import com.example.myawesomerecipe.repository.MealRepositoryImpl
 
-class MealViewModel : ViewModel() {
+class MealViewModel(private val mealRepository: MealRepository) : ViewModel() {
     val uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.Loading)
-    val mealRepository: MealRepository = MealRepositoryImpl()
     val favoriteIDs = mealRepository.favorites()
         .map { favorites -> favorites.map { it.id }.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())

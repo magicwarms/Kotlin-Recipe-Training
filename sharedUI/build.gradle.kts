@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
+            implementation(libs.koin.compose.viewModel)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
