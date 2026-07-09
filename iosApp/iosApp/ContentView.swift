@@ -43,7 +43,6 @@ extension ContentView {
         init() {
             self.viewModel = MealViewModel()
             self.uiState = viewModel.uiState.value
-            startObserving()
         }
 
         func startObserving() {

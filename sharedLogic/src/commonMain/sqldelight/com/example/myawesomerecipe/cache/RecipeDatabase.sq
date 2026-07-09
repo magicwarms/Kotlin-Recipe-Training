@@ -29,4 +29,5 @@ removeMeal:
 DELETE FROM Meal WHERE id = ?;
 
 selectAllMealsInfo:
-SELECT * FROM Meal;
+SELECT Meal.*
+FROM Meal;

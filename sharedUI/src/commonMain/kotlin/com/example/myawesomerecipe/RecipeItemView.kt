@@ -24,12 +24,13 @@ fun RecipeItemView(
     meal: MealModel,
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
-    onClick: () -> Unit
+    onClick: (MealModel) -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { onClick(meal) },
         colors = CardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
                 .copy(alpha = 0.8f),
@@ -58,14 +59,19 @@ fun RecipeItemView(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                meal.country?.let { country -> Text(country) }
+                meal.country?.let { country ->
+                    Text(country)
+                }
             }
+
             Spacer(modifier = Modifier.weight(1f))
+
             Text(
-                text = if (isFavorite) "STARRED" else "NOT STARRED",
-                modifier = Modifier.clickable {
-                    onFavoriteClick()
-                }.padding(16.dp)
+                text = if (isFavorite) "★" else "☆",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier
+                    .clickable { onFavoriteClick() }
+                    .padding(16.dp)
             )
         }
     }
