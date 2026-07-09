@@ -3,7 +3,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
+    alias(libs.plugins.kotlinxSerialization)
     alias(libs.plugins.sqldelight)
+    alias(libs.plugins.skie)
 }
 
 kotlin {
@@ -43,6 +45,7 @@ kotlin {
             implementation(libs.sqldelight.runtime)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+            implementation(libs.sqldelight.coroutines.extensions)
         }
 
         commonTest.dependencies {

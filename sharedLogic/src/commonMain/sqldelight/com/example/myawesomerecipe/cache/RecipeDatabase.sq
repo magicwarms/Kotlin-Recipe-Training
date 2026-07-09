@@ -25,6 +25,8 @@ INSERT INTO Meal(
 removeAllMeals:
 DELETE FROM Meal;
 
+removeMeal:
+DELETE FROM Meal WHERE id = ?;
+
 selectAllMealsInfo:
-SELECT Meal.*
-FROM Meal;
+SELECT * FROM Meal;

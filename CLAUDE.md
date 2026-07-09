@@ -24,15 +24,15 @@ Prereq: JDK 11+, Android SDK, Xcode (for iOS). Use the Gradle wrapper (`./gradle
 
 Three Gradle modules (`settings.gradle.kts`) plus a native iOS app dir:
 
-- **`sharedLogic`** — KMP library holding business logic. Compiles to Android + iOS. Exposes a **static iOS framework named `SharedLogic`** (`iosArm64`, `iosSimulatorArm64`). Dependencies wired here: Ktor client, kotlinx.serialization JSON, coroutines, SQLDelight, AndroidX lifecycle-viewmodel. Internal package layout under `commonMain`:
+- **`sharedLogic`** — KMP library holding business logic. Compiles to Android + iOS. Exposes a **static iOS framework named `SharedLogic`** (`iosArm64`, `iosSimulatorArm64`). The **SKIE** plugin (`co.touchlab.skie`) and the **kotlinx.serialization** plugin are applied here — SKIE makes the framework expose idiomatic Swift (sealed→enum, suspend, flows); serialization is required by `@Serializable` DTOs. Dependencies wired here: Ktor client (+content-negotiation), kotlinx.serialization JSON, coroutines, SQLDelight, AndroidX lifecycle-viewmodel. Internal package layout under `commonMain`:
   - `model/` — `MealModel` (domain), `MealDTO`/`MealResponse` (serializable API DTO with `toModel()`), `UiState` (Loading/Success/Error).
   - `repository/` — `MealRepository` interface + `MealRepositoryImpl` (`fetchMeals(mealName)` calls the [TheMealDB](https://themealdb.com) search API via Ktor and maps `MealResponse` → `MealModel`; `favorites()` is still `TODO()`), `HttpClient.kt` (`expect fun createHttpClient()`).
   - `presentation/` — `MealViewModel` (`androidx.lifecycle.ViewModel`, exposes `MutableStateFlow<UiState>`; `fetchMeals()` is still a **stub** returning empty success — not yet calling the repository).
   - `cache/` — SQLDelight: `Database` (internal wrapper, `getMeals()`), `DatabaseDriverFactory` interface, `RecipeDatabase.sq` schema.
   - `RecipeStorage.kt` — `expect class` for favourites persistence.
-- **`sharedUI`** — Compose Multiplatform UI library. Depends on `sharedLogic` via `api(projects.sharedLogic)` (typesafe project accessor). **Currently Android-only** — its `kotlin {}` block declares only `androidLibrary`, no iOS target.
+- **`sharedUI`** — Compose Multiplatform UI library. Depends on `sharedLogic` via `api(projects.sharedLogic)` (typesafe project accessor). `App()` observes `MealViewModel.uiState` and renders a meal-card list, loading thumbnails with **Coil 3** (`coil-compose` + `coil-network-ktor3`). **Currently Android-only** — its `kotlin {}` block declares only `androidLibrary`, no iOS target.
 - **`androidApp`** — Android application. Depends on `sharedUI`; `MainActivity` calls the shared `App()` composable.
-- **`iosApp/`** — native SwiftUI app. Links the `SharedLogic` framework **directly** and calls `Greeting().greet()` in `ContentView.swift`.
+- **`iosApp/`** — native SwiftUI app. Links the `SharedLogic` framework **directly**. `ContentView.swift` drives `MealViewModel` and renders its `UiState` via **SKIE**-generated Swift interop (`onEnum(of:)` over the sealed `UiState`, plus `Flow` observation). Needs `OTHER_LDFLAGS = -lsqlite3` in the app target (SQLDelight native driver links libsqlite3).
 
 **Key consequence of the topology:** the shared Compose UI (`App()` in `sharedUI`) runs on Android only. iOS does **not** consume `sharedUI` today — it hosts its own SwiftUI and reuses only `sharedLogic`. To share Compose UI on iOS you must add iOS targets + a framework to `sharedUI/build.gradle.kts` and wire it into the Xcode project.
 

@@ -30,6 +30,8 @@ MyAwesomeRecipe is a [Kotlin Multiplatform (KMP)](https://www.jetbrains.com/help
 | Persistence | SQLDelight | 2.3.2 |
 | Concurrency | kotlinx.coroutines | 1.11.0 |
 | Presentation | AndroidX lifecycle-viewmodel | — |
+| Image loading | Coil 3 | 3.0.0 |
+| Kotlin↔Swift interop | SKIE | 0.10.13 |
 | Android SDK | compileSdk 37 · minSdk 26 · targetSdk 36 | — |
 
 Dependency and plugin versions are centralized in the Gradle version catalog: [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
@@ -70,7 +72,7 @@ Three more `expect`/`actual` pairs follow the same pattern in `sharedLogic`:
 
 **Data / domain / presentation layers.** `sharedLogic/commonMain` is organized into `model/` (`MealModel`, the serializable `MealDTO`/`MealResponse` with `toModel()`, and `UiState`), `repository/` (`MealRepository` + `MealRepositoryImpl`), `presentation/` (`MealViewModel` exposing a `StateFlow<UiState>`), and `cache/` (SQLDelight `Database` wrapper over the `Meal` table in `RecipeDatabase.sq`). These layers are **partially wired**: `MealRepositoryImpl.fetchMeals()` now fetches from [TheMealDB](https://themealdb.com) over Ktor and maps the response to `MealModel`, but `MealViewModel.fetchMeals()` is still a stub that never calls the repository, `favorites()` is `TODO()`, and the SQLDelight cache / `RecipeStorage` are not yet exercised.
 
-**UI topology.** The shared Compose UI runs on **Android only**. iOS uses native SwiftUI and consumes just `sharedLogic`. To share the Compose UI on iOS, add iOS targets and a framework to `sharedUI/build.gradle.kts` and wire it into the Xcode project.
+**UI topology.** The shared Compose UI runs on **Android only** — `App()` in `sharedUI` observes `MealViewModel.uiState` and renders a meal list (Coil loads thumbnails). iOS uses **native SwiftUI** (`ContentView.swift`) and consumes only `sharedLogic`: it drives the same `MealViewModel` through **SKIE**-generated Swift interop (`onEnum(of:)` over the sealed `UiState`, `Flow` observation). SKIE is applied to `sharedLogic`, so the `SharedLogic` framework exposes idiomatic Swift enums/suspend/flows. To share the Compose UI itself on iOS, add iOS targets and a framework to `sharedUI/build.gradle.kts` and wire it into the Xcode project.
 
 ## Requirements
 
