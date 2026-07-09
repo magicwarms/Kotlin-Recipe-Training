@@ -39,7 +39,7 @@ fun App(viewModel: MealViewModel = MealViewModel()) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("Recipe Grimoire")
+                Text("My Awesome Recipe")
 
                 RecipeListView(
                     uiState = uiState,
